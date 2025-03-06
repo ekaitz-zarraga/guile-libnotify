@@ -136,63 +136,57 @@ API and is designed to mimic the behavior of the @code{notify-send}
 command-line tool.  It handles initialization, configuration, display,
 and cleanup automatically, making it ideal for quick use cases.  Note
 that init/uninit has a performance overhead, for applications you should
-probably use the low level api as described in @ref{Low-level interface}.
+probably use the low level API as described in @ref{Low-level interface}.
 
-@deffn {Procedure} notify-send summary @
-       [#:body body] [#:urgency urgency] [#:timeout timeout] @
-       [#:app-name app-name] [#:icon icon] [#:category category] @
-       [#:hints hints] [#:transient transient] @
-       [#:actions actions] [#:on-close on-close] [#:wait wait]
+@deffn {Procedure} notify-send app-name summary #:key body urgency timeout @
+icon category hints transient actions on-close
 
-Send a desktop notification with the given @var{summary} and optional
-parameters.
+Send a desktop notification with the given @var{summary}.
 
 @itemize
 @item
-@var{summary}: The summary text of the notification (required).
+@var{app-name}: The application name associated with the notification.
 
 @item
-@var{body}: The body text of the notification (optional).
+@var{summary}: The summary text of the notification.
 
 @item
-@var{urgency}: The urgency level of the notification, which can be @code{low},
-@code{normal}, or @code{critical} (optional).
+@var{body}: Optional body text of the notification.
 
 @item
-@var{timeout}: The timeout in milliseconds after which the notification will
-expire (optional).
+@var{urgency}: Optional urgency level of the notification, which can be
+@code{low}, @code{normal}, or @code{critical}.
 
 @item
-@var{app-name}: The application name associated with the notification
-(optional).
+@var{timeout}: Optional timeout in milliseconds after which the notification
+will expire.
 
 @item
-@var{icon}: The icon to display in the notification, either as a filename or
-stock icon name (optional).
+@var{icon}: Optional icon to display in the notification, either as a filename
+or stock icon name.
 
 @item
-@var{category}: The category of the notification, used for sorting or filtering
-(optional).
+@var{category}: Optional category of the notification, used for sorting or
+filtering.
 
 @item
-@var{hints}: A list of hints to attach to the notification. Each hint is a pair
-of a symbol and a value (optional).
+@var{hints}: Optional list of hints to attach to the notification. Each hint is
+a pair of a symbol and a value.
 
 @item
-@var{transient}: Whether the notification should be transient (optional).
+@var{transient}: Optional flag that describes weather the notification should
+be transient. It uses the @code{transient} hint internally.
 
 @item
-@var{actions}: A list of actions to attach to the notification. Each action is
-a list containing an action name, label, callback, user data, and free function
-(optional).
+@var{actions}: Optional list of actions to attach to the notification. Each
+action is a list containing an action name, label, callback, user data, and
+free function. The call will block until an action is triggered or the
+notification closes.
 
 @item
-@var{on-close}: A callback function to execute when the notification is closed
-(optional).
+@var{on-close}: Optional callback function to execute when the notification is
+closed. The call will block until notification closes.
 
-@item
-@var{wait}: Whether to wait for the notification to be closed or an action to
-be triggered before returning (optional).
 @end itemize
 @end deffn
 
@@ -218,7 +212,7 @@ describes everything libnotify is able to deal with.
 First you need to initialize the notification context. Use @code{notify-init}
 for that.
 
-@deffn {Procedure} notify-init #:key app-name
+@deffn {Procedure} notify-init app-name
 
 Initializes the notification context. Should be uninitialized with
 @code{notify-uninit}.
@@ -561,9 +555,10 @@ action:
 @example
 (use-modules (notify-send))
 
-(notify-send "Problem!"
+(notify-send
+  "notify.scm"
+  "Problem!"
   #:body "Device died!"
-  #:app-name "notify.scm"
   #:category "device.error"
   #:hints (list `((image-path . "file:///home/Ekaitz/clip.png")
                   (urgency . 2)))
@@ -582,7 +577,7 @@ Doing the same thing is possible using lower-level libnotify procedures:
 (use-modules (notify)
              (notify glib))
 
-(notify-init #:app-name "notify.scm")
+(notify-init "notify.scm")
 (define noti (notification-new "Problem!" #:body "Device died!"))
 (notification-set-category noti "device.error")
 (notification-set-urgency noti 'critical)
