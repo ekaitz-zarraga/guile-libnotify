@@ -120,7 +120,15 @@ sudo.
 
 Guile-Libnotify provides two main ways to send desktop notifications: a
 high-level interface using the @code{notify-send} function and a
-low-level interface using the libnotify API.
+low-level interface using the libnotify API. Both are part of the `notify`
+module.
+
+@example
+(use-modules (notify))
+@end example
+
+@node High-level interface
+@section High-level interface
 
 The @code{notify-send} function provides a simple and convenient way to
 send desktop notifications. It abstracts the complexity of the libnotify
@@ -128,84 +136,84 @@ API and is designed to mimic the behavior of the @code{notify-send}
 command-line tool.  It handles initialization, configuration, display,
 and cleanup automatically, making it ideal for quick use cases.  Note
 that init/uninit has a performance overhead, for applications you should
-probably use the libnotify API.
+probably use the low level api as described in @ref{Low-level interface}.
 
 @deffn {Procedure} notify-send summary @
        [#:body body] [#:urgency urgency] [#:timeout timeout] @
        [#:app-name app-name] [#:icon icon] [#:category category] @
        [#:hints hints] [#:transient transient] @
        [#:actions actions] [#:on-close on-close] [#:wait wait]
+
 Send a desktop notification with the given @var{summary} and optional
 parameters.
 
 @itemize
-@item summary
-The summary text of the notification (required).
+@item
+@var{summary}: The summary text of the notification (required).
 
-@item body
-The body text of the notification (optional).
+@item
+@var{body}: The body text of the notification (optional).
 
-@item urgency
-The urgency level of the notification, which can be @code{low},
+@item
+@var{urgency}: The urgency level of the notification, which can be @code{low},
 @code{normal}, or @code{critical} (optional).
 
-@item timeout
-The timeout in milliseconds after which the notification will expire
+@item
+@var{timeout}: The timeout in milliseconds after which the notification will
+expire (optional).
+
+@item
+@var{app-name}: The application name associated with the notification
 (optional).
 
-@item app-name
-The application name associated with the notification (optional).
+@item
+@var{icon}: The icon to display in the notification, either as a filename or
+stock icon name (optional).
 
-@item icon
-The icon to display in the notification, either as a filename or stock
-icon name (optional).
-
-@item category
-The category of the notification, used for sorting or filtering
+@item
+@var{category}: The category of the notification, used for sorting or filtering
 (optional).
 
-@item hints
-A list of hints to attach to the notification. Each hint is a pair of a
-symbol and a value (optional).
+@item
+@var{hints}: A list of hints to attach to the notification. Each hint is a pair
+of a symbol and a value (optional).
 
-@item transient
-Whether the notification should be transient (optional).
+@item
+@var{transient}: Whether the notification should be transient (optional).
 
-@item actions
-A list of actions to attach to the notification. Each action is a list
-containing an action name, label, callback, user data, and free function
+@item
+@var{actions}: A list of actions to attach to the notification. Each action is
+a list containing an action name, label, callback, user data, and free function
 (optional).
 
-@item on-close
-A callback function to execute when the notification is closed
+@item
+@var{on-close}: A callback function to execute when the notification is closed
 (optional).
 
-@item wait
-Whether to wait for the notification to be closed or an action to be
-triggered before returning (optional).
+@item
+@var{wait}: Whether to wait for the notification to be closed or an action to
+be triggered before returning (optional).
 @end itemize
 @end deffn
 
-For advanced use cases or custom behavior, Guile-Libnotify provides
+@node Low-level interface
+@section Low-level interface
+
+For advanced use cases or custom behavior, Guile Libnotify provides
 direct access to the libnotify API.  It provides fine-grained control
 over notifications, allowing you to manage every aspect of their
 lifecycle. This is more efficient and useful for applications that
 require custom behavior or advanced features not covered by the
 @code{notify-send} function.
 
-First, import the module.
-
-@example
-(use-modules (notify))
-@end example
-
-Also, you should take a look to the Notification Spec by Freedesktop, as it
+You should take a look to the Notification Spec by Freedesktop, as it
 describes everything libnotify is able to deal with.
 
 @url{https://specifications.freedesktop.org/notification-spec/latest/}
 
+
 @node Initialization
-@section Initialization
+@subsection Initialization
 
 First you need to initialize the notification context. Use @code{notify-init}
 for that.
@@ -230,7 +238,7 @@ with @code{notify-init}.
 
 
 @node Creating notifications
-@section Creating notifications
+@subsection Creating notifications
 
 Once the notification context is created you can generate notifications using
 @code{notification-new}.
@@ -269,7 +277,7 @@ Updates an existing notification object.
 @end deffn
 
 @node Showing and closing notifications
-@section Showing and closing notifications
+@subsection Showing and closing notifications
 
 Also you can show the notification or close an open one.
 
@@ -295,7 +303,7 @@ Close the notification.
 
 
 @node Configuring the notification
-@section Configuring the notification
+@subsection Configuring the notification
 
 
 @deffn {Procedure} notification-set-timeout notification timeout
@@ -340,7 +348,7 @@ Set notification's category.
 
 
 @node Manipulating hints
-@section Manipulating hints
+@subsection Manipulating hints
 
 @dfn{Hints} are a way to provide extra data to a notification server that the
 server may be able to make use of.
@@ -377,7 +385,7 @@ Remove all notification's hints.
 
 
 @node User interaction
-@section User interaction
+@subsection User interaction
 
 There are two ways to interact with the user: Actions and detecting when the
 user closes the notification.
@@ -387,7 +395,7 @@ same underlying mechanism Libnotify uses for asynchronous event control: Glib's
 main loop. That is explained later in @ref{Running the main loop}.
 
 @node Actions
-@subsection Actions
+@subsubsection Actions
 
 @dfn{Actions} represent possible interactions user might do, normally rendered
 as a button in the notification. Actions require support from the notification
@@ -432,14 +440,14 @@ Remove all notification's actions.
 @end deffn
 
 @node Closed signal
-@subsection Closed signal
+@subsubsection Closed signal
 
 The other way is to react to when the user closes the notification. For that,
 you need to use the underlaying Glib mechanism to connect a function to the
 @code{closed} signal. This is explained in @ref{Glib related functionality}.
 
 @node Glib related functionality
-@section Glib related functionality
+@subsection Glib related functionality
 
 Some of Libnotify's functionality, mostly user interaction, requires using
 Glib's machinery. Guile-Libnotify provides the minimal set of definitions to
@@ -450,7 +458,7 @@ deal with Glib from Guile easily.
 @end example
 
 @node Connecting signals
-@subsection Connecting signals
+@subsubsection Connecting signals
 
 @dfn{Signals} are the way Glib connects actions that happen in the program with
 callbacks. In our case we only use them to capture when the notification is
@@ -490,7 +498,7 @@ Disconnects (removes) the connection identified by @code{handler-id}
 
 
 @node Running the main loop
-@subsection Running the main loop
+@subsubsection Running the main loop
 
 The @dfn{Main Loop} is the mechanism GLib provides to wait for events happening
 in the notification (it's an event loop, like the one in JavaScript or Libuv).
