@@ -21,7 +21,8 @@
             notification-clear-hints
             notification-get-closed-reason
             notification-add-action
-            notification-clear-actions))
+            notification-clear-actions
+            notify-send))
 
 (define-syntax or-NULL
   (syntax-rules ()
@@ -152,3 +153,65 @@
                         (lambda (data)
                           (free-func (pointer->scm data)))
                         (list '*))))
+
+(define* (notify-send summary #:key
+                      (body #f)
+                      (urgency #f)
+                      (timeout #f)
+                      (app-name #f)
+                      (icon #f)
+                      (category #f)
+                      (hints '())
+                      (transient #f)
+                      (actions '())
+                      (on-close #f)
+                      (wait #f))
+  "Send desktop notifications easily.  This is a wrapper procedure for
+the most part of libnotify's API."
+
+  (notify-init #:app-name app-name)
+  (let ((notification (notification-new summary #:body body #:icon icon)))
+    (when category
+      (notification-set-category notification category))
+    (when urgency
+      (notification-set-urgency notification urgency))
+    (when timeout
+      (notification-set-timeout notification timeout))
+    (when transient
+      (notification-set-hint notification 'transient #t))
+    (for-each (match-lambda
+                ((key . value)
+                 (notification-set-hint notification key value)))
+              hints)
+    ;; Determine if we need to wait for interaction or closure
+    (if (or wait (not (null? actions)) on-close)
+        (let ((loop (g-main-loop-new)))
+          ;; Connect the closed signal to quit the loop and call on-close
+          (g-signal-connect notification "closed"
+                            (lambda args
+                              (when on-close (apply on-close args))
+                              (g-main-loop-quit loop))
+                            #f)
+          ;; Add each action with a wrapper to quit the loop after callback
+          (for-each (lambda (action)
+                      (match action
+                        ((action-name label callback user-data free-func)
+                         (let ((wrapped-callback
+                                (lambda (n a d)
+                                  (callback n a d)
+                                  (g-main-loop-quit loop))))
+                           (notification-add-action notification
+                                                    action-name
+                                                    label
+                                                    wrapped-callback
+                                                    user-data
+                                                    free-func)))))
+                    actions)
+          ;; Show the notification and run the main loop
+          (notification-show notification)
+          (g-main-loop-run loop)
+          (notify-uninit))
+        ;; If not waiting, show notification and uninit immediately
+        (begin
+          (notification-show notification)
+          (notify-uninit)))))
