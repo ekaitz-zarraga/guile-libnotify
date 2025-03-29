@@ -10,7 +10,6 @@
             g-main-loop-is-running
             g-main-loop-run
             g-main-loop-quit
-            unwrap-g
             g-signal-disconnect
             g-signal-connect
             wrap-g-object))
@@ -38,19 +37,6 @@
                             #:return-type '*
                             #:arg-types (list '*)))
 
-(define %g-variant-unref
-  (foreign-library-function glib "g_variant_unref"
-                            #:return-type void
-                            #:arg-types (list '*)))
-
-(define (finalize-g-variant variant)
-  (%g-variant-unref (unwrap-g variant)))
-
-(define-foreign-object-type <g-variant>
-  %wrap-g-variant
-  (var)
-  #:finalizer finalize-g-variant)
-
 (define (g-variant-new type val)
   (wrap-g-variant
     (match type
@@ -77,37 +63,19 @@
                             #:return-type void
                             #:arg-types (list '*)))
 
-(define %g-main-loop-unref
-  (foreign-library-function glib "g_main_loop_unref"
-                            #:return-type void
-                            #:arg-types (list '*)))
-
 (define %g-main-loop-is-running
   (foreign-library-function glib "g_main_loop_is_running"
                             #:return-type int
                             #:arg-types (list '*)))
-
-(define (finalize-g-main-loop loop)
-  (let ((var (slot-ref loop 'var)))
-    (%g-main-loop-unref (make-pointer var))))
-
-(define-foreign-object-type <g-main-loop>
-  %wrap-g-main-loop
-  (var)
-  #:finalizer finalize-g-main-loop)
 
 (define* (g-main-loop-new #:key (context %null-pointer)
                                (is-running 0))
   (wrap-g-main-loop (%g-main-loop-new %null-pointer 0)))
 
 (define (g-main-loop-is-running loop)
-  (= 0 (%g-main-loop-is-running (unwrap-g loop))))
-
-(define (g-main-loop-quit loop)
-  (%g-main-loop-quit (unwrap-g loop)))
-
-(define (g-main-loop-run loop)
-  (%g-main-loop-run (unwrap-g loop)))
+  (= 0 (%g-main-loop-is-running loop)))
+(define g-main-loop-quit %g-main-loop-quit)
+(define g-main-loop-run %g-main-loop-run)
 
 
 ; g_signal_connect_data ((instance),
@@ -130,7 +98,7 @@
 
 (define (g-signal-connect instance signal handler data)
   (%g-signal-connect-data
-    (unwrap-g instance)
+    instance
     (string->pointer signal)
     (procedure->pointer void
                         handler
@@ -139,31 +107,14 @@
     %null-pointer
     0))
 
-(define (g-signal-disconnect instance handler-id)
-  (%g-signal-disconnect
-    (unwrap-g instance)
-    handler-id))
+(define g-signal-disconnect %g-signal-disconnect)
 
-;; GObject support
-(define %g-object-unref
-  (foreign-library-function gobject "g_object_unref"
-                            #:return-type void
-                            #:arg-types (list '*)))
-
-(define (finalize-g-object loop)
-  (let ((var (slot-ref loop 'var)))
-    (%g-object-unref (make-pointer var))))
-
-(define-foreign-object-type <g-object>
-  %wrap-g-object
-  (var)
-  #:finalizer finalize-g-object)
-
-(define (compose f g)
-  (lambda (x) (g (f x))))
-(define wrap-g-object    (compose pointer-address %wrap-g-object))
-(define wrap-g-variant   (compose pointer-address %wrap-g-variant))
-(define wrap-g-main-loop (compose pointer-address %wrap-g-object))
-
-(define (unwrap-g x)
-  (make-pointer (slot-ref x 'var)))
+(define (wrap-g-object obj)
+  (make-pointer (pointer-address obj)
+                (foreign-library-pointer gobject "g_object_unref")))
+(define (wrap-g-variant obj)
+  (make-pointer (pointer-address obj)
+                (foreign-library-pointer glib "g_variant_unref")))
+(define (wrap-g-main-loop obj)
+  (make-pointer (pointer-address obj)
+                (foreign-library-pointer glib "g_main_loop_unref")))

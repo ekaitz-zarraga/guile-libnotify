@@ -46,7 +46,7 @@
 
 
 (define* (notification-update notification summary #:key (body #f) (icon #f))
-  (internal:notify-notification-update (glib:unwrap-g notification)
+  (internal:notify-notification-update notification
                                        (string->pointer summary)
                                        (or-NULL body string->pointer)
                                        (or-NULL icon string->pointer)))
@@ -54,13 +54,13 @@
 
 (define (notification-show notification)
   ;; TODO send the GError** as second parameter and deal with it
-  (if (= 0 (internal:notify-notification-show (glib:unwrap-g notification)
+  (if (= 0 (internal:notify-notification-show notification
                                               %null-pointer))
     (error "notify-notification-show: error happened")))
 
 (define (notification-close notification)
   ;; TODO send the GError** as second parameter and deal with it
-  (if (= 0 (internal:notify-notification-close (glib:unwrap-g notification)
+  (if (= 0 (internal:notify-notification-close notification
                                                %null-pointer))
     (error "notify-notification-close: error happened")))
 
@@ -69,17 +69,17 @@
 ;  (notify-notification-set-app-icon notification (string->pointer icon)))
 
 (define (notification-set-app-name notification name)
-  (internal:notify-notification-set-app-name (glib:unwrap-g notification)
+  (internal:notify-notification-set-app-name notification
                                              (string->pointer name)))
 
 (define (notification-set-category notification category)
-  (internal:notify-notification-set-category (glib:unwrap-g notification)
+  (internal:notify-notification-set-category notification
                                              (string->pointer category)))
 
 ;; TODO: maybe remove me
 (define (notification-set-image-from-pixbuf notification gdk-pixbuf-image)
   (internal:notify-notification-set-image-from-pixbuf
-    (glib:unwrap-g notification)
+    notification
     gdk-pixbuf-image))
 
 (define (notification-set-timeout notification timeout)
@@ -88,7 +88,7 @@
       ('never 0)
       ('default -1)
       (else timeout)))
-  (internal:notify-notification-set-timeout (glib:unwrap-g notification)
+  (internal:notify-notification-set-timeout notification
                                             (timeout->num timeout)))
 
 (define (notification-set-urgency notification urgency)
@@ -97,7 +97,7 @@
       ('low      0)
       ('normal   1)
       ('critical 2)))
-  (internal:notify-notification-set-urgency (glib:unwrap-g notification)
+  (internal:notify-notification-set-urgency notification
                                             (urgency->num urgency)))
 
 
@@ -122,24 +122,23 @@
 
   (let ((variant (glib:g-variant-new (key-type key) value)))
     (internal:notify-notification-set-hint
-      (glib:unwrap-g notification)
+      notification
       (string->pointer (symbol->string key))
-      (glib:unwrap-g variant))))
+      variant)))
 
 (define (notification-clear-hints notification)
-  (internal:notify-notification-clear-hints (glib:unwrap-g notification)))
+  (internal:notify-notification-clear-hints notification))
 
 (define (notification-get-closed-reason notification)
-  (internal:notify-notification-get-closed-reason
-    (glib:unwrap-g notification)))
+  (internal:notify-notification-get-closed-reason notification))
 
 (define (notification-clear-actions notification)
-  (internal:notify-notification-clear-actions (glib:unwrap-g notification)))
+  (internal:notify-notification-clear-actions notification))
 
 (define* (notification-add-action notification action label callback user-data
                                   free-func)
   (internal:notify-notification-add-action
-    (glib:unwrap-g notification)
+    notification
     (string->pointer action)
     (string->pointer label)
     (procedure->pointer void
